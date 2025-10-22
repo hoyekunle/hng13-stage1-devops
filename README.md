@@ -14,6 +14,11 @@ This repository contains a comprehensive Bash script (`deploy.sh`) designed to a
 - **Logging and Error Handling**: Logs all actions (success/failure) to a timestamped log file and includes robust error handling with `trap` functions and meaningful exit codes.
 - **Idempotency and Cleanup**: Designed to be safely re-run without breaking existing setups. It gracefully stops/removes old containers before redeployment. An optional `--cleanup` flag is provided to remove all deployed resources.
 
+## TODO
+
+- [x] Add ssh-keyscan command to deploy.sh to automatically add remote host key before SSH connectivity check
+- [x] Test the modified script to ensure SSH check passes
+
 ## Usage
 
 ### Running the Deployment

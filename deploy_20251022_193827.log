@@ -1,0 +1,58 @@
+2025-10-22 19:38:27 [INFO] Starting deployment...
+2025-10-22 19:38:27 [INFO] Collecting deployment parameters...
+2025-10-22 19:39:21 [SUCCESS] Parameters collected successfully.
+2025-10-22 19:39:21 [INFO] Cloning or pulling Git repository...
+2025-10-22 19:39:22 [SUCCESS] Repository ready on branch 'main'.
+2025-10-22 19:39:22 [INFO] Checking for Dockerfile or docker-compose.yml...
+2025-10-22 19:39:22 [SUCCESS] Docker configuration verified.
+2025-10-22 19:39:22 [INFO] Preparing remote environment on 98.84.119.211...
+2025-10-22 19:39:25 [INFO] Testing SSH connection...
+2025-10-22 19:39:29 [INFO] Updating system packages...
+2025-10-22 19:39:29 [INFO] Executing remote command: sudo apt-get update -y && sudo apt-get upgrade -y
+2025-10-22 19:39:36 [INFO] Checking Docker installation...
+2025-10-22 19:39:36 [INFO] Executing remote command: command -v docker > /dev/null 2>&1
+2025-10-22 19:39:39 [INFO] Docker already installed.
+2025-10-22 19:39:39 [INFO] Checking Docker Compose...
+2025-10-22 19:39:39 [INFO] Executing remote command: command -v docker-compose > /dev/null 2>&1
+2025-10-22 19:39:41 [INFO] Docker Compose already installed.
+2025-10-22 19:39:41 [INFO] Checking Nginx...
+2025-10-22 19:39:41 [INFO] Executing remote command: command -v nginx > /dev/null 2>&1
+2025-10-22 19:39:46 [INFO] Nginx already installed.
+2025-10-22 19:39:46 [INFO] Executing remote command: sudo usermod -aG docker ubuntu
+2025-10-22 19:39:49 [INFO] Executing remote command: sudo systemctl enable docker && sudo systemctl start docker
+2025-10-22 19:39:53 [INFO] Executing remote command: sudo systemctl enable nginx && sudo systemctl start nginx
+2025-10-22 19:39:57 [SUCCESS] Remote environment prepared successfully.
+2025-10-22 19:39:57 [INFO] Deploying application...
+2025-10-22 19:40:48 [INFO] Executing remote command: 
+        cd /home/ubuntu/hng13-stage1 &&
+        if [ -f docker-compose.yml ]; then
+            docker-compose down --remove-orphans || true
+            docker-compose up -d --build
+        elif [ -f Dockerfile ]; then
+            docker stop hng13-stage1 || true
+            docker rm hng13-stage1 || true
+            docker build -t hng13-stage1 .
+            docker run -d -p 80:80 --name hng13-stage1 hng13-stage1
+        else
+            exit 1
+        fi
+    
+2025-10-22 19:41:04 [SUCCESS] Application deployed successfully.
+2025-10-22 19:41:04 [INFO] Configuring Nginx reverse proxy...
+2025-10-22 19:41:04 [INFO] Executing remote command: echo "
+server {
+    listen 80;
+    server_name 98.84.119.211;
+
+    location / {
+        proxy_pass http://localhost:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+" | sudo tee /etc/nginx/sites-available/hng13-stage1
+2025-10-22 19:41:07 [INFO] Executing remote command: sudo ln -sf /etc/nginx/sites-available/hng13-stage1 /etc/nginx/sites-enabled/
+2025-10-22 19:41:10 [INFO] Executing remote command: sudo nginx -t && sudo systemctl reload nginx
+2025-10-22 19:41:14 [ERROR] Remote command failed: sudo nginx -t && sudo systemctl reload nginx
